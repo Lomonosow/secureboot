@@ -225,7 +225,7 @@ enroll_keys() {
 	efi-updatevar -e -f "${KEYS_DIR}/KEK.esl" KEK
 
 	msg "Enrolling PK key"
-	efi-updatevar -e -f "${KEYS_DIR}/PK.auth" PK
+	efi-updatevar -f "${KEYS_DIR}/PK.auth" PK
 
 }
 
