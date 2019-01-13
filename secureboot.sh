@@ -2,7 +2,7 @@
 
 # TODO: Documentation for this script
 
-declare -r myver="0.0.1"
+declare -r myver="0.0.2"
 declare -r this="$(basename $0)"
 
 LIBRARY=${LIBRARY:-'/usr/share/makepkg'}
@@ -154,6 +154,15 @@ sign_sb_key() {
 }
 
 initialize() {
+	if check_key "db"; then
+		warning "Signed ISK key already exists. Initialize can damage your secureboot configuration if keys already enrolled into UEFI."
+		ask "Are you really want to regenerate keys? [Yes/No] "
+		read ans
+		if [[ "$ans" != 'Y' ]] || [[ "$ans" != 'y' ]] || [[ "$ans" != 'yes' ]] || [[ "$ans" != 'Yes' ]]; then
+			exit 1
+		fi
+	fi
+
 	[[ ! -d "$KEYS_DIR" ]] && mkdir -p -m 0755 "$KEYS_DIR"
 	chmod 0600 "$KEYS_DIR"
 
