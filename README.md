@@ -1,9 +1,7 @@
 # secureboot
 ## Usage
 ```
-secureboot.sh 0.0.1
-
-Usage: secureboot.sh [action] [options]
+Usage: secureboot [action] [options]
 Manage secureboot
 
 Actions:
