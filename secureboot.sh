@@ -337,3 +337,5 @@ esac
 (( INIT )) && initialize
 (( SIGN )) && sign
 (( ENROLL_KEYS )) && enroll_keys
+
+exit 0
