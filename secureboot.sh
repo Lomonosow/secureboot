@@ -2,7 +2,7 @@
 
 # TODO: Documentation for this script
 
-declare -r myver="0.0.2"
+declare -r myver="0.1.0"
 declare -r this="$(basename $0)"
 
 LIBRARY=${LIBRARY:-'/usr/share/makepkg'}
@@ -59,13 +59,14 @@ usage() {
 	printf -- "                                 signed file will be located in the same directory that source file\n"
 	printf -- "                                 and have postfix '.signed'. Can be overwrited by --output option\n"
 	printf -- "  --enroll-keys              Enroll keys into UEFI when system in Setup Mode\n"
+	printf -- "  --is-setup                 Check is system in Setup Mode\n"
 	echo
 
 	printf -- "Options:\n"
 	printf -- "  --no-color                 Disable colorizing\n"
 	printf -- "  --verbose                  Enable more verbose output\n"
 	printf -- "  --secure-db                Generate ISK key encrypted. You will enter passphrase when signing images.\n"
-	printf -- "  --no-pass                  Generate keys unencrypted. [NOT RECOMENDED]\n"
+	printf -- "  --no-pass                  Generate keys unencrypted. [NOT RECOMMENDED]\n"
 	printf -- "  --output                   Write signed data to file\n"
 	printf -- "  -h, --help                 Show this help message and exit\n"
 	printf -- "  -v, --version              Show program version\n"
@@ -208,9 +209,9 @@ sign(){
 check_setup_mode() {
 	local var=$(efivar -l | grep SetupMode)
 	if (( ! "$(efivar -d --name ${var})" )); then
-		error "To enroll keys you will switch system into Setup Mode"
-		exit 1
+        return 1
 	fi
+    return 0
 }
 
 enroll_keys() {
@@ -225,7 +226,12 @@ enroll_keys() {
 	(( error )) && exit 1
 	unset error
 
-	check_setup_mode
+    setup_mode=check_setup_mode
+
+    if [ "$setup_mode" != "0" ]; then
+		error "To enroll keys you will switch system into Setup Mode"
+		exit 1
+    fi
 
 	msg "Enrolling db key"
 	efi-updatevar -e -f "${KEYS_DIR}/db.esl" db
@@ -239,7 +245,7 @@ enroll_keys() {
 }
 
 OPTSHORT="s:hvo:"
-OPTLONG=('init' 'sign:' 'enroll-keys' 'no-color' 'verbose' 'secure-db' 'no-pass' 'output:' 'help' 'version')
+OPTLONG=('init' 'sign:' 'enroll-keys' 'is-setup' 'no-color' 'verbose' 'secure-db' 'no-pass' 'output:' 'help' 'version')
 if ! parseopts "$OPTSHORT" "${OPTLONG[@]}" -- "$@"; then
 	exit 1
 fi
@@ -250,6 +256,7 @@ unset OPTSHORT OPTLONG OPTRET
 INIT=0
 SIGN=0
 ENROLL_KEYS=0
+SETUP_CHECK=0
 
 USE_COLOR='y'
 VERBOSE='n'
@@ -267,6 +274,7 @@ while (( $# )); do
 		--init)		INIT=1 ;;
 		-s|--sign)	SIGN=1; shift; SIGN_TARGET=$1 ;;
 		--enroll-keys)	ENROLL_KEYS=1 ;;
+		--is-setup)	SETUP_CHECK=1 ;;
 
 		--no-color)	USE_COLOR='n' ;;
 
@@ -321,7 +329,7 @@ unset error
 
 KEYS_DIR=${KEYS_DIR:-/etc/secureboot/keys}
 
-numopt=$(( INIT + SIGN + ENROLL_KEYS ))
+numopt=$(( INIT + SIGN + ENROLL_KEYS + SETUP_CHECK ))
 
 case $numopt in
 	0)    error "no operation specified (use -h/--help for help)"; exit 1 ;;
@@ -332,8 +340,9 @@ case $numopt in
 		;;
 esac
 
-(( ! INIT )) && check_keys
+(( ! INIT && ! SETUP_CHECK )) && check_keys
 
+(( SETUP_CHECK )) && exit $(check_setup_mode)
 (( INIT )) && initialize
 (( SIGN )) && sign
 (( ENROLL_KEYS )) && enroll_keys
