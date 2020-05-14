@@ -226,9 +226,7 @@ enroll_keys() {
 	(( error )) && exit 1
 	unset error
 
-    setup_mode=check_setup_mode
-
-    if [ "$setup_mode" != "0" ]; then
+    if ! check_setup_mode ; then
 		error "To enroll keys you will switch system into Setup Mode"
 		exit 1
     fi
