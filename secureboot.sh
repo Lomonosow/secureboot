@@ -2,7 +2,7 @@
 
 # TODO: Documentation for this script
 
-declare -r myver="0.1.0"
+declare -r myver="0.1.2"
 declare -r this="$(basename $0)"
 
 LIBRARY=${LIBRARY:-'/usr/share/makepkg'}
