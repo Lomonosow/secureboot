@@ -67,6 +67,7 @@ usage() {
 	printf -- "  --verbose                  Enable more verbose output\n"
 	printf -- "  --secure-db                Generate ISK key encrypted. You will enter passphrase when signing images.\n"
 	printf -- "  --no-pass                  Generate keys unencrypted. [NOT RECOMMENDED]\n"
+	printf -- "  --key-size                 Generate keys of specified length. Default: 2048\n"
 	printf -- "  --output                   Write signed data to file\n"
 	printf -- "  -h, --help                 Show this help message and exit\n"
 	printf -- "  -v, --version              Show program version\n"
@@ -114,7 +115,7 @@ generate_sb_key() {
 		fi
 	fi
 
-	PASSPHRASE="$passphrase" openssl req -batch -new -x509 -newkey rsa:2049 -subj "/CN=${name}/" \
+	PASSPHRASE="$passphrase" openssl req -batch -new -x509 -newkey rsa:${KEY_SIZE:-2048} -subj "/CN=${name}/" \
 		-keyout "${KEYS_DIR}/${name}.key" \
 		-out "${KEYS_DIR}/${name}.crt" \
 		-days 3650 -sha256 \
@@ -243,7 +244,7 @@ enroll_keys() {
 }
 
 OPTSHORT="s:hvo:"
-OPTLONG=('init' 'sign:' 'enroll-keys' 'is-setup' 'no-color' 'verbose' 'secure-db' 'no-pass' 'output:' 'help' 'version')
+OPTLONG=('init' 'sign:' 'enroll-keys' 'is-setup' 'no-color' 'verbose' 'secure-db' 'no-pass' 'output:' 'key-size:' 'help' 'version')
 if ! parseopts "$OPTSHORT" "${OPTLONG[@]}" -- "$@"; then
 	exit 1
 fi
@@ -280,6 +281,7 @@ while (( $# )); do
 		--no-pass)	USE_PASS='n' ;;
 		--secure-db)	SECURE_DB='y' ;;
 		--output)	shift; SIGN_OUTPUT=$1 ;;
+		--key-size)	shift; KEY_SIZE=$1 ;;
 		-h|--help)	usage; exit 0 ;;
 		-v|--version)	version; exit 0 ;;
 	esac
